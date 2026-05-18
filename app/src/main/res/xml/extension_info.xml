@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtensionInfo
+    displayName="@string/extension_name"
+    id="karoo_decoupling"
+    scansDevices="false">
+
+    <DataType
+        typeId="decoupling"
+        displayName="@string/decoupling_field_name"
+        description="@string/decoupling_field_desc"
+        graphical="true" />
+</ExtensionInfo>

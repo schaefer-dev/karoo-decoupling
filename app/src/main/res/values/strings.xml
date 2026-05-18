@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Karoo Decoupling</string>
+    <string name="extension_name">Decoupling</string>
+    <string name="decoupling_field_name">Aerobic Decoupling</string>
+    <string name="decoupling_field_desc">Power:HR drift between first and second half of moving time (Pa:Hr).</string>
+</resources>
