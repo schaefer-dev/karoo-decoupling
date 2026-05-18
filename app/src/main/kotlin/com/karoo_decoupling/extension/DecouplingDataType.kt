@@ -1,6 +1,7 @@
 package com.karoo_decoupling.extension
 
 import android.content.Context
+import android.graphics.Color
 import android.widget.RemoteViews
 import com.karoo_decoupling.BuildConfig
 import com.karoo_decoupling.R
@@ -35,7 +36,7 @@ class DecouplingDataType(
         emitter.onNext(UpdateGraphicConfig(showHeader = true, formatDataTypeId = null))
 
         if (config.preview) {
-            emitter.updateView(render(context, DecouplingResult(1.85, 1.79, 3.24)))
+            emitter.updateView(render(context, DecouplingResult(1.85, 1.79, 3.24), preview = true))
             return
         }
 
@@ -73,12 +74,14 @@ class DecouplingDataType(
         context: Context,
         result: DecouplingResult?,
         simulated: Boolean = false,
+        preview: Boolean = false,
     ): RemoteViews {
         val rv = RemoteViews(context.packageName, R.layout.field_decoupling)
         if (result == null) {
             rv.setTextViewText(R.id.decoupling_value, if (simulated) "— *" else "—")
             rv.setTextViewText(R.id.decoupling_ef_first, "EF1 —")
             rv.setTextViewText(R.id.decoupling_ef_second, "EF2 —")
+            rv.setTextColor(R.id.decoupling_value, Color.BLACK)
         } else {
             val suffix = if (simulated) " *" else ""
             rv.setTextViewText(
@@ -93,6 +96,16 @@ class DecouplingDataType(
                 R.id.decoupling_ef_second,
                 String.format(Locale.US, "EF2 %.2f", result.efSecond),
             )
+            if (preview) {
+                rv.setTextColor(R.id.decoupling_value, Color.BLACK)
+            } else {
+                rv.setInt(
+                    R.id.decoupling_root,
+                    "setBackgroundColor",
+                    DecouplingColors.forDrift(result.driftPct),
+                )
+                rv.setTextColor(R.id.decoupling_value, Color.WHITE)
+            }
         }
         return rv
     }
