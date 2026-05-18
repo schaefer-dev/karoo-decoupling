@@ -4,14 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="4dp">
+    android:gravity="center">
 
     <TextView
         android:id="@+id/decoupling_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="40sp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#FFFFFFFF"
         android:text="—" />
