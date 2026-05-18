@@ -2,6 +2,7 @@ package com.karoo_decoupling.extension
 
 import android.content.Context
 import android.widget.RemoteViews
+import com.karoo_decoupling.BuildConfig
 import com.karoo_decoupling.R
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
@@ -15,6 +16,7 @@ import io.hammerhead.karooext.models.ViewConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -22,9 +24,6 @@ class DecouplingDataType(
     private val karooSystem: KarooSystemService,
     extension: String,
 ) : DataTypeImpl(extension, "decoupling") {
-
-    @Volatile private var lastHr: Double? = null
-    @Volatile private var lastPower: Double? = null
 
     override fun startStream(emitter: Emitter<StreamState>) {
         // Live data field uses startView; emit Unavailable for the raw-value channel.
@@ -41,55 +40,50 @@ class DecouplingDataType(
         }
 
         val scope = CoroutineScope(Dispatchers.IO)
-        val calc = DecouplingCalculator()
+        val simulated = BuildConfig.DEBUG
 
-        scope.launch {
-            karooSystem.streamDataFlow(DataType.Type.HEART_RATE).collect { state ->
-                lastHr = (state as? StreamState.Streaming)?.dataPoint?.singleValue
-            }
+        val hrFlow: Flow<StreamState>
+        val powerFlow: Flow<StreamState>
+        val rideStateFlow: Flow<RideState>
+        val elapsedFlow: Flow<StreamState>
+
+        if (simulated) {
+            hrFlow = SimulatedStreams.heartRate()
+            powerFlow = SimulatedStreams.power()
+            rideStateFlow = SimulatedStreams.rideState()
+            elapsedFlow = SimulatedStreams.elapsedTime()
+        } else {
+            hrFlow = karooSystem.streamDataFlow(DataType.Type.HEART_RATE)
+            powerFlow = karooSystem.streamDataFlow(DataType.Type.POWER)
+            rideStateFlow = karooSystem.consumerFlow()
+            elapsedFlow = karooSystem.streamDataFlow(DataType.Type.ELAPSED_TIME)
         }
+
+        val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedFlow)
         scope.launch {
-            karooSystem.streamDataFlow(DataType.Type.POWER).collect { state ->
-                lastPower = (state as? StreamState.Streaming)?.dataPoint?.singleValue
-            }
-        }
-        scope.launch {
-            // Reset accumulator when a fresh ride starts (Idle -> Recording transition).
-            var wasIdle = true
-            karooSystem.consumerFlow<RideState>().collect { rs ->
-                if (rs is RideState.Recording && wasIdle) calc.reset()
-                wasIdle = rs is RideState.Idle
-            }
-        }
-        scope.launch {
-            // ELAPSED_TIME pauses automatically on RideState.Paused, so it doubles as a
-            // moving-time clock. Each emission appends a sample (if HR+power are present)
-            // and re-renders.
-            karooSystem.streamDataFlow(DataType.Type.ELAPSED_TIME).collect { state ->
-                val elapsed = (state as? StreamState.Streaming)?.dataPoint?.singleValue ?: return@collect
-                val movingSec = elapsed.toInt()
-                val hr = lastHr
-                val power = lastPower
-                if (hr != null && power != null) {
-                    calc.addSample(movingSec, power, hr)
-                }
-                emitter.updateView(render(context, calc.result()))
+            coordinator.run(this).collect { result ->
+                emitter.updateView(render(context, result, simulated))
             }
         }
 
         emitter.setCancellable { scope.cancel() }
     }
 
-    private fun render(context: Context, result: DecouplingResult?): RemoteViews {
+    private fun render(
+        context: Context,
+        result: DecouplingResult?,
+        simulated: Boolean = false,
+    ): RemoteViews {
         val rv = RemoteViews(context.packageName, R.layout.field_decoupling)
         if (result == null) {
-            rv.setTextViewText(R.id.decoupling_value, "—")
+            rv.setTextViewText(R.id.decoupling_value, if (simulated) "— *" else "—")
             rv.setTextViewText(R.id.decoupling_ef_first, "EF1 —")
             rv.setTextViewText(R.id.decoupling_ef_second, "EF2 —")
         } else {
+            val suffix = if (simulated) " *" else ""
             rv.setTextViewText(
                 R.id.decoupling_value,
-                String.format(Locale.US, "%+.1f%%", result.driftPct),
+                String.format(Locale.US, "%+.1f%%%s", result.driftPct, suffix),
             )
             rv.setTextViewText(
                 R.id.decoupling_ef_first,
