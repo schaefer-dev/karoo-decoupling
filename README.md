@@ -16,11 +16,10 @@ suggests cardiac drift, which is a useful pacing/training signal.
 This extension samples power and heart rate once per second of **moving time**
 (stopped time is excluded automatically — Karoo's `ELAPSED_TIME` stream pauses on
 `RideState.Paused`), splits the ride at the midpoint of total moving time, and
-shows:
-
-- the drift percentage, e.g. `+4.2%` (positive = HR rose more than power; classic
-  decoupling) or `-1.8%` (power rose more than HR);
-- `EF1` and `EF2` for context.
+shows the drift percentage, e.g. `+4.2%` (positive = HR rose more than power;
+classic decoupling) or `-1.8%` (power rose more than HR). EF1 and EF2 are
+computed internally but not rendered in the widget — only the drift figure
+appears on screen.
 
 The widget shows `—` for the first 120 seconds of moving time (not enough data),
 then displays your running Pa:Hr — a live preview of what your final drift would
@@ -147,11 +146,11 @@ On the Karoo:
 
 ## 8. What to expect during a ride
 
-| Time elapsed (moving)  | Widget shows                                                                 |
-|------------------------|------------------------------------------------------------------------------|
-| 0 – 119 s              | `—`, `EF1 —`, `EF2 —`                                                        |
-| 120 s and beyond       | `+X.X%`, `EF1 1.XX`, `EF2 1.XX` — repaints every ~30 s in release, per-second in debug |
-| After Stop → Start     | Resets back to `—` for the next 120 s                                        |
+| Time elapsed (moving)  | Widget shows                                                          |
+|------------------------|-----------------------------------------------------------------------|
+| 0 – 119 s              | `—`                                                                   |
+| 120 s and beyond       | `+X.X%` — repaints every ~30 s in release, per-second in debug        |
+| After Stop → Start     | Resets back to `—` for the next 120 s                                 |
 
 If power or HR is missing for a moment the widget keeps using the last-known
 value rather than blanking out. Pauses don't show as gaps — moving time is what
