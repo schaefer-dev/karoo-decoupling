@@ -23,9 +23,11 @@ shows:
 - `EF1` and `EF2` for context.
 
 The widget shows `—` for the first 120 seconds of moving time (not enough data),
-then updates every second so you have a live preview of what your final Pa:Hr
-would be if you ended the ride right now. Per-second updates trivially satisfy
-the "at least once per minute" requirement.
+then displays your running Pa:Hr — a live preview of what your final drift would
+be if you ended the ride right now. Release builds repaint the value about once
+every 30 seconds to save battery (the math still uses every per-second sample;
+only the on-screen redraw is throttled). Debug builds repaint on every tick — see
+§10 for the full debug-vs-release behavior table.
 
 **Example.** Hour 1 averages 200 W / 145 bpm → EF1 = 1.379. Hour 2 averages
 200 W / 158 bpm → EF2 = 1.266. Drift = (1.379 − 1.266) / 1.379 × 100 = **+8.2%**.
@@ -145,11 +147,11 @@ On the Karoo:
 
 ## 8. What to expect during a ride
 
-| Time elapsed (moving)  | Widget shows                                              |
-|------------------------|-----------------------------------------------------------|
-| 0 – 119 s              | `—`, `EF1 —`, `EF2 —`                                     |
-| 120 s and beyond       | `+X.X%`, `EF1 1.XX`, `EF2 1.XX`, updating every second    |
-| After Stop → Start     | Resets back to `—` for the next 120 s                     |
+| Time elapsed (moving)  | Widget shows                                                                 |
+|------------------------|------------------------------------------------------------------------------|
+| 0 – 119 s              | `—`, `EF1 —`, `EF2 —`                                                        |
+| 120 s and beyond       | `+X.X%`, `EF1 1.XX`, `EF2 1.XX` — repaints every ~30 s in release, per-second in debug |
+| After Stop → Start     | Resets back to `—` for the next 120 s                                        |
 
 If power or HR is missing for a moment the widget keeps using the last-known
 value rather than blanking out. Pauses don't show as gaps — moving time is what
@@ -198,10 +200,30 @@ events (see the Idle→Recording reset test for the pattern).
 
 ---
 
-## 10. Testing on a device with simulated data
+## 10. Debug vs release widget behavior
 
-The **debug** APK injects a deterministic synthetic ride instead of reading
-real sensors — useful for validating the rendering and lifecycle path on actual
+Two things differ between the `debug` and `release` APKs. Both are gated on
+`BuildConfig.DEBUG`, so a release build cannot leak debug behavior.
+
+| Aspect                    | Debug (`assembleDebug`)                                         | Release (`assembleRelease`)                                                    |
+|---------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Data source               | Deterministic simulator (`SimulatedStreams.kt`), no sensors      | Real HR + power streams from `KarooSystemService`                              |
+| Simulated-time pace       | 10× wall-clock (`TICK_MS = 100 ms`) — a full 8-min test ride elapses in ~48 s | n/a — runs on actual moving time                                               |
+| Widget repaint cadence    | Every tick (~100 ms in debug; the simulator drives rendering)   | ~Once every 30 s, plus one extra paint at the warm-up→first-value transition   |
+| Display marker            | Trailing `*` (e.g. `+11.3% *`) so synthetic data is unmistakable | No marker                                                                       |
+
+The 30 s release cadence is a battery optimization: the math layer
+(`DecouplingCalculator`) still consumes every per-second sample, so EF1/EF2
+remain accurate; only the RemoteViews redraw is throttled. The Karoo SDK
+documents "at least once per minute" as the liveness floor — 30 s sits well
+inside that and keeps the field feeling responsive when drift changes (e.g.
+during interval transitions) without burning CPU on per-second redraws of a
+slow-moving number.
+
+### Running the on-device simulator
+
+The debug APK injects a deterministic synthetic ride instead of reading real
+sensors — useful for validating the rendering and lifecycle path on actual
 Karoo hardware without going on a ride.
 
 - Build: `./gradlew :app:assembleDebug`.
@@ -220,7 +242,10 @@ Expected drift after ~8 minutes: **roughly +10 to +12 %**. While the simulator
 is active the displayed value carries a trailing `*` marker (e.g. `+11.3% *`)
 so you cannot mistake it for live data.
 
-The release APK never activates the simulator (it's gated on `BuildConfig.DEBUG`).
+Because of the 10× speedup, the full simulated ride completes in ~48 s of
+wall-clock time, and the debug widget paints on every tick so you can see the
+value change smoothly. The release APK never activates the simulator and uses
+the 30 s repaint cadence described above.
 
 ---
 

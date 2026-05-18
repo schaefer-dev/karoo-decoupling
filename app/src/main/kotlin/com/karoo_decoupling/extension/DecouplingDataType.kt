@@ -17,7 +17,9 @@ import io.hammerhead.karooext.models.ViewConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -62,8 +64,36 @@ class DecouplingDataType(
 
         val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedFlow)
         scope.launch {
-            coordinator.run(this).collect { result ->
-                emitter.updateView(render(context, result, simulated))
+            if (simulated) {
+                coordinator.run(this).collect { result ->
+                    emitter.updateView(render(context, result, simulated = true))
+                }
+            } else {
+                // Release: throttle renders to ~30 s to save battery. The coordinator
+                // still receives every per-second sample (EF1/EF2 need them); only the
+                // RemoteViews IPC + redraw is rate-limited. One extra paint fires on the
+                // warm-up→first-value transition so the rider doesn't wait up to 30 s
+                // after the 120 s threshold to see the first number.
+                var latest: DecouplingResult? = null
+                var seenFirstResult = false
+                emitter.updateView(render(context, null, simulated = false))
+
+                val collector = launch {
+                    coordinator.run(this).collect { result ->
+                        latest = result
+                        if (!seenFirstResult && result != null) {
+                            seenFirstResult = true
+                            emitter.updateView(render(context, result, simulated = false))
+                        }
+                    }
+                }
+                launch {
+                    while (isActive) {
+                        delay(30_000)
+                        emitter.updateView(render(context, latest, simulated = false))
+                    }
+                }
+                collector.join()
             }
         }
 
