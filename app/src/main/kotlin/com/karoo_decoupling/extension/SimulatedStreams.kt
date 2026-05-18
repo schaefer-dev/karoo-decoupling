@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.flow
  * DecouplingDataType.render) so it is obvious you are not looking at real sensor data.
  */
 object SimulatedStreams {
-    private const val TICK_MS = 1000L
+    private const val TICK_MS = 100L
 
     fun elapsedTime(): Flow<StreamState> = flow {
         var t = 0

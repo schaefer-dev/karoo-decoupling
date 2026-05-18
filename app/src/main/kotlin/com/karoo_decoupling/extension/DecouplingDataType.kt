@@ -36,7 +36,7 @@ class DecouplingDataType(
         emitter.onNext(UpdateGraphicConfig(showHeader = true, formatDataTypeId = null))
 
         if (config.preview) {
-            emitter.updateView(render(context, DecouplingResult(1.85, 1.79, 3.24), preview = true))
+            emitter.updateView(render(context, DecouplingResult(1.85, 1.79, 3.24)))
             return
         }
 
@@ -74,39 +74,23 @@ class DecouplingDataType(
         context: Context,
         result: DecouplingResult?,
         simulated: Boolean = false,
-        preview: Boolean = false,
     ): RemoteViews {
         val rv = RemoteViews(context.packageName, R.layout.field_decoupling)
-        if (result == null) {
-            rv.setTextViewText(R.id.decoupling_value, if (simulated) "— *" else "—")
-            rv.setTextViewText(R.id.decoupling_ef_first, "EF1 —")
-            rv.setTextViewText(R.id.decoupling_ef_second, "EF2 —")
-            rv.setTextColor(R.id.decoupling_value, Color.BLACK)
+        val background = if (result == null) {
+            DecouplingColors.WARMUP
+        } else {
+            DecouplingColors.forDrift(result.driftPct)
+        }
+        rv.setInt(R.id.decoupling_root, "setBackgroundColor", background)
+        rv.setTextColor(R.id.decoupling_value, Color.WHITE)
+
+        val text = if (result == null) {
+            if (simulated) "— *" else "—"
         } else {
             val suffix = if (simulated) " *" else ""
-            rv.setTextViewText(
-                R.id.decoupling_value,
-                String.format(Locale.US, "%+.1f%%%s", result.driftPct, suffix),
-            )
-            rv.setTextViewText(
-                R.id.decoupling_ef_first,
-                String.format(Locale.US, "EF1 %.2f", result.efFirst),
-            )
-            rv.setTextViewText(
-                R.id.decoupling_ef_second,
-                String.format(Locale.US, "EF2 %.2f", result.efSecond),
-            )
-            if (preview) {
-                rv.setTextColor(R.id.decoupling_value, Color.BLACK)
-            } else {
-                rv.setInt(
-                    R.id.decoupling_root,
-                    "setBackgroundColor",
-                    DecouplingColors.forDrift(result.driftPct),
-                )
-                rv.setTextColor(R.id.decoupling_value, Color.WHITE)
-            }
+            String.format(Locale.US, "%+.1f%%%s", result.driftPct, suffix)
         }
+        rv.setTextViewText(R.id.decoupling_value, text)
         return rv
     }
 }

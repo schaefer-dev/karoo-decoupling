@@ -1,6 +1,7 @@
 package com.karoo_decoupling.extension
 
 object DecouplingColors {
+    const val WARMUP = 0xFF424242.toInt()
     const val BLUE = 0xFF1565C0.toInt()
     const val GREEN = 0xFF1B5E20.toInt()
     const val YELLOW = 0xFFF57F17.toInt()
