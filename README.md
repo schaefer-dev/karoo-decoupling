@@ -257,26 +257,3 @@ the 30 s repaint cadence described above.
 | Widget stuck on `—` indefinitely                                              | Either HR or power is not paired; or you have not yet accumulated 120 s of moving time.      |
 | `adb install` reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`                    | A previous build with a different signing key is installed. `adb uninstall com.karoo_decoupling` then reinstall. |
 | Trailing `*` appears next to drift values                                     | You installed the debug APK — sensor data is synthetic. Install the release APK for real rides. |
-
----
-
-## 12. Project layout
-
-```
-app/src/main/kotlin/com/karoo_decoupling/extension/
-  DecouplingExtension.kt       service entry point; registers DataType
-  DecouplingDataType.kt        thin SDK adapter; wires real-or-simulated flows into the coordinator and renders RemoteViews
-  DecouplingCoordinator.kt     pure-flow coordination, fully unit-testable
-  DecouplingCalculator.kt      sample buffer + EF1/EF2/drift math
-  SimulatedStreams.kt          deterministic synthetic streams (debug only)
-  KarooExtensions.kt           streamDataFlow / consumerFlow helpers
-
-app/src/main/res/
-  xml/extension_info.xml       extension + data type registration
-  layout/field_decoupling.xml  widget layout
-  values/strings.xml           display strings
-
-app/src/test/kotlin/com/karoo_decoupling/extension/
-  DecouplingCalculatorTest.kt  Layer 1 — pure math
-  DecouplingCoordinatorTest.kt Layer 2 — stream coordination via runTest
-```
