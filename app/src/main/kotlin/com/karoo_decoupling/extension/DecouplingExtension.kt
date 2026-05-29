@@ -9,7 +9,10 @@ class DecouplingExtension : KarooExtension(EXTENSION_ID, "0.1.0") {
     private lateinit var karooSystem: KarooSystemService
 
     override val types: List<DataTypeImpl> by lazy {
-        listOf(DecouplingDataType(karooSystem, EXTENSION_ID))
+        listOf(
+            DecouplingDataType(karooSystem, EXTENSION_ID),
+            DecouplingTrendDataType(karooSystem, EXTENSION_ID),
+        )
     }
 
     override fun onCreate() {

@@ -4,4 +4,6 @@
     <string name="extension_name">Decoupling</string>
     <string name="decoupling_field_name">pw:hr</string>
     <string name="decoupling_field_desc">Power:HR drift between first and second half of moving time (Pa:Hr).</string>
+    <string name="decoupling_trend_field_name">pw:hr trend</string>
+    <string name="decoupling_trend_field_desc">Trend of Pa:Hr drift over time — sparkline plus 20-min delta.</string>
 </resources>

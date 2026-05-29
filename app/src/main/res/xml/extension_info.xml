@@ -9,4 +9,9 @@
         displayName="@string/decoupling_field_name"
         description="@string/decoupling_field_desc"
         graphical="true" />
+    <DataType
+        typeId="decoupling_trend"
+        displayName="@string/decoupling_trend_field_name"
+        description="@string/decoupling_trend_field_desc"
+        graphical="true" />
 </ExtensionInfo>
