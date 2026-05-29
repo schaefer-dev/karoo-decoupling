@@ -6,4 +6,15 @@
     <string name="decoupling_field_desc">Power:HR drift between first and second half of moving time (Pa:Hr).</string>
     <string name="decoupling_trend_field_name">pw:hr trend</string>
     <string name="decoupling_trend_field_desc">Trend of Pa:Hr drift over time — sparkline plus 20-min delta.</string>
+
+    <string name="wbal_percent_field_name">W\'bal %</string>
+    <string name="wbal_percent_field_desc">Anaerobic capacity remaining as a percentage (Skiba W\' balance). Colored by status.</string>
+    <string name="wbal_kj_field_name">W\'bal kJ</string>
+    <string name="wbal_kj_field_desc">Anaerobic work capacity remaining in kilojoules (Skiba W\' balance).</string>
+    <string name="wbal_status_field_name">W\'bal status</string>
+    <string name="wbal_status_field_desc">Anaerobic capacity status: FRESH / GOOD / WORKING / DEPLETING / CRITICAL / EMPTY.</string>
+    <string name="wbal_eta_field_name">W\'bal time</string>
+    <string name="wbal_eta_field_desc">Time to empty (above CP) or to full recovery (below CP).</string>
+    <string name="wbal_rate_field_name">W\'bal rate</string>
+    <string name="wbal_rate_field_desc">Net W\' depletion/recovery rate in watts (− depleting, + recovering).</string>
 </resources>

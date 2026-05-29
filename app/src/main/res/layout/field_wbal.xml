@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/decoupling_root"
+    android:id="@+id/wbal_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -8,7 +8,7 @@
 
     <!-- Small field title, like the built-in "3S POWER" / "HR" labels. -->
     <TextView
-        android:id="@+id/decoupling_title"
+        android:id="@+id/wbal_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -26,7 +26,7 @@
          matching the built-in numeric fields instead of a fixed size. Regular weight (not bold),
          like Karoo's built-in colored fields. -->
     <TextView
-        android:id="@+id/decoupling_value"
+        android:id="@+id/wbal_value"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

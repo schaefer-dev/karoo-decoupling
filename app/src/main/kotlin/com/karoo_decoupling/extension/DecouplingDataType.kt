@@ -1,7 +1,9 @@
 package com.karoo_decoupling.extension
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.view.Gravity
 import android.widget.RemoteViews
 import com.karoo_decoupling.BuildConfig
 import com.karoo_decoupling.R
@@ -35,10 +37,12 @@ class DecouplingDataType(
     }
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        emitter.onNext(UpdateGraphicConfig(showHeader = true, formatDataTypeId = null))
+        // Suppress Karoo's own header bar so our colored background fills the whole tile; we draw
+        // a small title inside the layout instead (mirrors the built-in fields and the W'bal fields).
+        emitter.onNext(UpdateGraphicConfig(showHeader = false, formatDataTypeId = null))
 
         if (config.preview) {
-            emitter.updateView(render(context, DecouplingResult(1.85, 1.79, 3.24)))
+            emitter.updateView(render(context, config, DecouplingResult(1.85, 1.79, 3.24)))
             return
         }
 
@@ -66,7 +70,7 @@ class DecouplingDataType(
         scope.launch {
             if (simulated) {
                 coordinator.run(this).collect { result ->
-                    emitter.updateView(render(context, result, simulated = true))
+                    emitter.updateView(render(context, config, result, simulated = true))
                 }
             } else {
                 // Release: throttle renders to ~30 s to save battery. The coordinator
@@ -76,21 +80,21 @@ class DecouplingDataType(
                 // after the 120 s threshold to see the first number.
                 var latest: DecouplingResult? = null
                 var seenFirstResult = false
-                emitter.updateView(render(context, null, simulated = false))
+                emitter.updateView(render(context, config, null, simulated = false))
 
                 val collector = launch {
                     coordinator.run(this).collect { result ->
                         latest = result
                         if (!seenFirstResult && result != null) {
                             seenFirstResult = true
-                            emitter.updateView(render(context, result, simulated = false))
+                            emitter.updateView(render(context, config, result, simulated = false))
                         }
                     }
                 }
                 launch {
                     while (isActive) {
                         delay(30_000)
-                        emitter.updateView(render(context, latest, simulated = false))
+                        emitter.updateView(render(context, config, latest, simulated = false))
                     }
                 }
                 collector.join()
@@ -102,6 +106,7 @@ class DecouplingDataType(
 
     private fun render(
         context: Context,
+        config: ViewConfig,
         result: DecouplingResult?,
         simulated: Boolean = false,
     ): RemoteViews {
@@ -111,7 +116,28 @@ class DecouplingDataType(
         } else {
             DecouplingColors.forDrift(result.driftPct)
         }
-        rv.setInt(R.id.decoupling_root, "setBackgroundColor", background)
+        // Use a rounded shape drawable tinted to the drift color so the fill respects Karoo's
+        // rounded field edge (a flat setBackgroundColor rect would bleed past the corners). When
+        // the rider disables field boundaries there's no rounded edge, so use sharp corners.
+        rv.setInt(
+            R.id.decoupling_root,
+            "setBackgroundResource",
+            if (config.boundariesEnabled) R.drawable.bg_field_rounded else R.drawable.bg_field_square,
+        )
+        rv.setColorStateList(R.id.decoupling_root, "setBackgroundTintList", ColorStateList.valueOf(background))
+
+        // White text on the colored background, with the rider's configured horizontal
+        // alignment. The value font size is left to the layout's autoSizeTextType so it fills the
+        // tile like the built-in numeric fields (setting it here would disable auto-sizing).
+        val hGravity = when (config.alignment) {
+            ViewConfig.Alignment.LEFT -> Gravity.START
+            ViewConfig.Alignment.CENTER -> Gravity.CENTER_HORIZONTAL
+            ViewConfig.Alignment.RIGHT -> Gravity.END
+        }
+        rv.setInt(R.id.decoupling_title, "setGravity", hGravity)
+        rv.setInt(R.id.decoupling_value, "setGravity", hGravity or Gravity.CENTER_VERTICAL)
+        rv.setTextViewText(R.id.decoupling_title, context.getString(R.string.decoupling_field_name))
+        rv.setTextColor(R.id.decoupling_title, Color.WHITE)
         rv.setTextColor(R.id.decoupling_value, Color.WHITE)
 
         val text = if (result == null) {

@@ -28,6 +28,7 @@ object DecouplingTrendRenderer {
         widthPx: Int,
         heightPx: Int,
         marker: String = "",
+        title: String = "",
         reuse: Bitmap? = null,
     ): Bitmap {
         val w = widthPx.coerceAtLeast(1)
@@ -47,8 +48,27 @@ object DecouplingTrendRenderer {
 
         drawSparkline(canvas, points, windowSec, w, h)
         drawDeltaText(canvas, deltaPct, marker, w, h)
+        if (title.isNotEmpty()) drawTitle(canvas, title, w, h)
 
         return bmp
+    }
+
+    /** Small uppercase field label in the top-right, mirroring the built-in field titles. */
+    private fun drawTitle(canvas: Canvas, title: String, w: Int, h: Int) {
+        val padX = w * 0.05f
+        val padY = h * 0.06f
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.DEFAULT_BOLD
+            textSize = h * 0.16f
+            style = Paint.Style.FILL
+            textAlign = Paint.Align.RIGHT
+            setShadowLayer(h * 0.03f, 0f, 0f, Color.BLACK)
+        }
+        val text = title.uppercase(Locale.US)
+        val bounds = Rect().also { paint.getTextBounds(text, 0, text.length, it) }
+        // Top-right, opposite the delta text (top-left) so they don't collide.
+        canvas.drawText(text, w - padX, padY + bounds.height(), paint)
     }
 
     private fun drawSparkline(

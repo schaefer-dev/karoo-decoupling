@@ -14,4 +14,29 @@
         displayName="@string/decoupling_trend_field_name"
         description="@string/decoupling_trend_field_desc"
         graphical="true" />
+    <DataType
+        typeId="wbal_percent"
+        displayName="@string/wbal_percent_field_name"
+        description="@string/wbal_percent_field_desc"
+        graphical="true" />
+    <DataType
+        typeId="wbal_kj"
+        displayName="@string/wbal_kj_field_name"
+        description="@string/wbal_kj_field_desc"
+        graphical="true" />
+    <DataType
+        typeId="wbal_status"
+        displayName="@string/wbal_status_field_name"
+        description="@string/wbal_status_field_desc"
+        graphical="true" />
+    <DataType
+        typeId="wbal_eta"
+        displayName="@string/wbal_eta_field_name"
+        description="@string/wbal_eta_field_desc"
+        graphical="true" />
+    <DataType
+        typeId="wbal_rate"
+        displayName="@string/wbal_rate_field_name"
+        description="@string/wbal_rate_field_desc"
+        graphical="true" />
 </ExtensionInfo>

@@ -48,7 +48,9 @@ class DecouplingTrendDataType(
     }
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        emitter.onNext(UpdateGraphicConfig(showHeader = true, formatDataTypeId = null))
+        // Suppress Karoo's own header bar so the sparkline fills the whole tile; the field title
+        // is drawn into the bitmap instead (mirrors the built-in fields and our other fields).
+        emitter.onNext(UpdateGraphicConfig(showHeader = false, formatDataTypeId = null))
 
         if (config.preview) {
             emitter.updateView(render(context, config, previewPoints(), previewDelta()))
@@ -136,8 +138,17 @@ class DecouplingTrendDataType(
             widthPx = config.viewSize.first.coerceAtLeast(1),
             heightPx = config.viewSize.second.coerceAtLeast(1),
             marker = marker,
+            title = context.getString(R.string.decoupling_trend_field_name),
         )
         rv.setImageViewBitmap(R.id.trend_sparkline, bitmap)
+        // Clip the bitmap to Karoo's rounded field edge so the color doesn't bleed past the
+        // corners; when boundaries are disabled there's no rounded edge so clipping is off.
+        rv.setBoolean(R.id.trend_root, "setClipToOutline", config.boundariesEnabled)
+        rv.setInt(
+            R.id.trend_root,
+            "setBackgroundResource",
+            if (config.boundariesEnabled) R.drawable.bg_field_rounded else 0,
+        )
         return rv
     }
 

@@ -53,6 +53,22 @@ object SimulatedStreams {
         }
     }
 
+    /**
+     * Power profile for exercising the W'bal fields without a ride: repeating 60 s surges
+     * above CP (350 W) followed by 60 s of easy soft-pedalling below CP (120 W). With a
+     * typical CP ~250 W this drives a visible deplete -> recover sawtooth so you can watch
+     * the percent fall, the status step down through the bands, then recover.
+     */
+    fun wbalPower(): Flow<StreamState> = flow {
+        var t = 0
+        while (true) {
+            val watts = if ((t % 120) < 60) 350.0 else 120.0
+            emit(streaming(DataType.Type.POWER, watts))
+            delay(TICK_MS)
+            t++
+        }
+    }
+
     fun rideState(): Flow<RideState> = flow {
         emit(RideState.Idle)
         delay(100L)
