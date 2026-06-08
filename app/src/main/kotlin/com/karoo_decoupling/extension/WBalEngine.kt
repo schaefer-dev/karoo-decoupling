@@ -62,7 +62,9 @@ class WBalEngine(
             settingsFlow = settingsRepository.settingsFlow
         }
 
-        val coordinator = WBalCoordinator(powerFlow, elapsedFlow, rideStateFlow, settingsFlow)
+        // ELAPSED_TIME arrives in milliseconds (real and simulated alike); convert once here so
+        // the coordinator keeps its seconds contract.
+        val coordinator = WBalCoordinator(powerFlow, elapsedFlow.elapsedSeconds(), rideStateFlow, settingsFlow)
         scope.launch {
             coordinator.run(this).collect { _results.value = it }
         }

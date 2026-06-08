@@ -66,7 +66,9 @@ class DecouplingDataType(
             elapsedFlow = karooSystem.streamDataFlow(DataType.Type.ELAPSED_TIME)
         }
 
-        val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedFlow)
+        // ELAPSED_TIME arrives in milliseconds (real and simulated alike); convert once here so
+        // the coordinator keeps its seconds contract.
+        val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedFlow.elapsedSeconds())
         scope.launch {
             if (simulated) {
                 coordinator.run(this).collect { result ->

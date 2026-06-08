@@ -65,6 +65,26 @@ class DecouplingCoordinatorTest {
     }
 
     @Test
+    fun `ELAPSED_TIME milliseconds keep 120s warm-up gate closed (regression)`() = runTest {
+        // The real SDK emits ELAPSED_TIME in MILLISECONDS. Fed raw, movingSec jumps to thousands
+        // and the 120 s warm-up gate opens after ~1 tick. With the boundary .elapsedSeconds()
+        // conversion, movingSec is real seconds and the gate behaves correctly.
+        val elapsedMs = (0..240).map { streaming(DataType.Type.ELAPSED_TIME, (it * 1000).toDouble()) }
+        val coordinator = DecouplingCoordinator(
+            hrFlow = listOf(streaming(DataType.Type.HEART_RATE, 150.0)).asReplayFlow(),
+            powerFlow = listOf(streaming(DataType.Type.POWER, 200.0)).asReplayFlow(),
+            rideStateFlow = listOf(RideState.Recording).asReplayFlow(),
+            elapsedFlow = elapsedMs.asReplayFlow().elapsedSeconds(),
+        )
+        val emissions = coordinator.run(this).take(elapsedMs.size).toList()
+        coroutineContext[kotlinx.coroutines.Job]?.children?.forEach { it.cancel() }
+
+        assertNull("tick 1 must still be null (gate must NOT open early on ms input)", emissions[1])
+        assertNull("tick 119 must be null", emissions[119])
+        assertNotNull("tick 120 must produce a result", emissions[120])
+    }
+
+    @Test
     fun `samples skipped while HR is missing`() = runTest {
         // Power arrives first; HR never arrives. Coordinator must emit nulls forever
         // because no samples reach the calculator.

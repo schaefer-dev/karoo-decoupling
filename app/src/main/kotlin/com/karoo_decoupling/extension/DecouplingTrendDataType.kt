@@ -77,8 +77,12 @@ class DecouplingTrendDataType(
             elapsedFlow = karooSystem.streamDataFlow(DataType.Type.ELAPSED_TIME)
         }
 
+        // ELAPSED_TIME arrives in milliseconds (real and simulated alike); convert once here so
+        // both the coordinator and the movingSec collector below see seconds.
+        val elapsedSecFlow = elapsedFlow.elapsedSeconds()
+
         val buffer = DecouplingTrendBuffer(windowSec = WINDOW_SEC)
-        val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedFlow)
+        val coordinator = DecouplingCoordinator(hrFlow, powerFlow, rideStateFlow, elapsedSecFlow)
 
         val movingSec = AtomicInteger(0)
         val wasIdle = AtomicBoolean(true)
@@ -88,7 +92,7 @@ class DecouplingTrendDataType(
             // ELAPSED_TIME internally and doesn't surface it. ELAPSED_TIME auto-pauses,
             // so this is moving seconds. Reset the buffer on Idle->Recording.
             launch {
-                elapsedFlow.collect { state ->
+                elapsedSecFlow.collect { state ->
                     val elapsed = (state as? StreamState.Streaming)?.dataPoint?.singleValue
                     if (elapsed != null) movingSec.set(elapsed.toInt())
                 }

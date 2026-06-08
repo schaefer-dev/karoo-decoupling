@@ -23,10 +23,15 @@ import kotlinx.coroutines.flow.flow
 object SimulatedStreams {
     private const val TICK_MS = 100L
 
+    /**
+     * Emits ELAPSED_TIME in **milliseconds** to match the real SDK (the consumer applies
+     * [elapsedSeconds] to convert back to seconds). `t` advances one logical second per 100 ms
+     * tick, so the simulated ride runs ~10x faster than wall-clock for quick on-device preview.
+     */
     fun elapsedTime(): Flow<StreamState> = flow {
         var t = 0
         while (true) {
-            emit(streaming(DataType.Type.ELAPSED_TIME, t.toDouble()))
+            emit(streaming(DataType.Type.ELAPSED_TIME, (t * 1000).toDouble()))
             delay(TICK_MS)
             t++
         }

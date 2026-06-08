@@ -112,6 +112,38 @@ class WBalCoordinatorTest {
     }
 
     @Test
+    fun `ELAPSED_TIME milliseconds yield physically correct depletion (regression)`() = runTest {
+        // The real SDK emits ELAPSED_TIME in MILLISECONDS. Feeding ms straight into the
+        // coordinator made dt ~1000/tick -> clamped to 5 s -> ~5x too-fast depletion. With the
+        // boundary .elapsedSeconds() conversion, dt is a real 1 s/tick and depletion matches the
+        // Skiba model. 30 s at 100 W over CP must drop W' only the small physical amount, NOT to
+        // the EMPTY band the bug produced.
+        val powerW = (cp + 100).toDouble() // 100 W over CP
+        val elapsedMs = (0..30).map { streaming(DataType.Type.ELAPSED_TIME, (it * 1000).toDouble()) }
+        val coordinator = WBalCoordinator(
+            powerFlow = listOf(streaming(DataType.Type.POWER, powerW)).asReplayFlow(),
+            elapsedFlow = elapsedMs.asReplayFlow().elapsedSeconds(),
+            rideStateFlow = listOf(RideState.Recording).asReplayFlow(),
+            settingsFlow = flowOf(WBalSettings(cp, wMax)),
+        )
+        val emissions = coordinator.run(this).take(elapsedMs.size).toList()
+        coroutineContext[kotlinx.coroutines.Job]?.children?.forEach { it.cancel() }
+
+        // Deterministic reference: 30 one-second Skiba steps (the model in WBalCalculator).
+        var ref = wMax.toDouble()
+        repeat(30) {
+            val recovery = (wMax - ref) / WBalCalculator.TAU
+            val rate = recovery - (powerW - cp) // power > cp
+            ref = (ref + rate * 1.0).coerceIn(0.0, wMax.toDouble())
+        }
+        assertEquals(ref, emissions.last()!!.wBalJoules, 1e-6)
+
+        // Bug tripwire: correct end ~17k (>85%); the old 5x-clamped behavior craters to ~5k (EMPTY).
+        assertTrue("W' must not over-deplete, was ${emissions.last()!!.wBalJoules}", emissions.last()!!.wBalJoules > 15_000.0)
+        assertTrue("pct must stay high, was ${emissions.last()!!.pctRemaining}", emissions.last()!!.pctRemaining > 70.0)
+    }
+
+    @Test
     fun `pause produces no depletion`() = runTest {
         // Two segments at the same elapsed value (clock stalled) -> dt=0 -> no change.
         val elapsed = elapsedFlowOf(0..30) + List(20) { streaming(DataType.Type.ELAPSED_TIME, 30.0) }
