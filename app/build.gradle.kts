@@ -12,8 +12,8 @@ android {
         applicationId = "com.karoo_decoupling"
         minSdk = 23
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 103
+        versionName = "1.0.3"
     }
 
     buildFeatures {
@@ -24,6 +24,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Signed with the debug keystore so the release APK is directly installable
+            // (same approach as other community Karoo extensions).
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
