@@ -28,12 +28,18 @@ class DecouplingCalculator {
     /**
      * Returns null until there is enough data to be meaningful (>=120s of moving time
      * with samples spanning both halves).
+     *
+     * The halves split the span the samples actually cover (first to last sample), not
+     * 0..now. Normally the first sample is at ~0 s so this is the same thing; but if HR/power
+     * only appear later, or the service restarts mid-ride and loses its buffer, the field still
+     * works on the data it has instead of showing "—" until the ride has doubled in length.
      */
     fun result(): DecouplingResult? {
         if (samples.size < 2) return null
-        val totalSec = samples.last().movingSec
-        if (totalSec < 120) return null
-        val mid = totalSec / 2
+        val firstSec = samples.first().movingSec
+        val spanSec = samples.last().movingSec - firstSec
+        if (spanSec < 120) return null
+        val mid = firstSec + spanSec / 2
 
         var p1 = 0.0; var h1 = 0.0; var n1 = 0
         var p2 = 0.0; var h2 = 0.0; var n2 = 0

@@ -190,6 +190,92 @@ class WBalCoordinatorTest {
         job.cancel()
     }
 
+    private class FakeSnapshotStore(var snapshot: WBalSnapshot? = null) : WBalSnapshotStore {
+        val saves = mutableListOf<WBalSnapshot>()
+        var clears = 0
+        override suspend fun load() = snapshot
+        override suspend fun save(snapshot: WBalSnapshot) { saves += snapshot; this.snapshot = snapshot }
+        override suspend fun clear() { clears++; snapshot = null }
+    }
+
+    @Test
+    fun `mid-ride restart resumes from the saved balance`() = runTest {
+        val store = FakeSnapshotStore(WBalSnapshot(wBalJoules = 12_000.0, elapsedSec = 590.0))
+        val ride = MutableSharedFlow<RideState>(replay = 1, extraBufferCapacity = 8)
+        val elapsed = MutableSharedFlow<StreamState>(extraBufferCapacity = 64)
+        val coordinator = WBalCoordinator(
+            flowOf(streaming(DataType.Type.POWER, cp.toDouble())), elapsed, ride,
+            flowOf(WBalSettings(cp, wMax)), snapshotStore = store,
+        )
+        val out = mutableListOf<WBalResult?>()
+        val job = launch { coordinator.run(this).collect { out += it } }
+        testScheduler.runCurrent()
+
+        // Service comes up mid-ride: first state is Recording, no Idle seen.
+        ride.emit(RideState.Recording)
+        testScheduler.runCurrent()
+        elapsed.emit(streaming(DataType.Type.ELAPSED_TIME, 600.0))
+        testScheduler.runCurrent()
+        assertEquals("resumes, not full", 12_000.0, out.last()!!.wBalJoules, 1e-9)
+        assertEquals(0, store.clears)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `fresh ride ignores and clears a stale snapshot, then saves every 30 s`() = runTest {
+        val store = FakeSnapshotStore(WBalSnapshot(wBalJoules = 5_000.0, elapsedSec = 0.0))
+        val ride = MutableSharedFlow<RideState>(replay = 1, extraBufferCapacity = 8)
+        val elapsed = MutableSharedFlow<StreamState>(extraBufferCapacity = 1024)
+        val coordinator = WBalCoordinator(
+            flowOf(streaming(DataType.Type.POWER, (cp + 100).toDouble())), elapsed, ride,
+            flowOf(WBalSettings(cp, wMax)), snapshotStore = store,
+        )
+        val out = mutableListOf<WBalResult?>()
+        val job = launch { coordinator.run(this).collect { out += it } }
+        testScheduler.runCurrent()
+
+        ride.emit(RideState.Idle)
+        testScheduler.runCurrent()
+        assertEquals("Idle clears the stale snapshot", 1, store.clears)
+        ride.emit(RideState.Recording)
+        testScheduler.runCurrent()
+        for (s in elapsedFlowOf(0..65)) elapsed.emit(s)
+        testScheduler.runCurrent()
+
+        assertEquals("starts full, not from the stale snapshot", wMax.toDouble(), out.first()!!.wBalJoules, 1e-9)
+        assertEquals(listOf(0.0, 30.0, 60.0), store.saves.map { it.elapsedSec })
+        assertEquals(out[60]!!.wBalJoules, store.saves.last().wBalJoules, 1e-9)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `service start mid-ride does not reset an already restored balance`() = runTest {
+        // Elapsed tick arrives before the first RideState event: the later Recording must not
+        // be mistaken for a fresh ride (only an observed Idle -> Recording resets).
+        val store = FakeSnapshotStore(WBalSnapshot(wBalJoules = 9_000.0, elapsedSec = 100.0))
+        val ride = MutableSharedFlow<RideState>(replay = 1, extraBufferCapacity = 8)
+        val elapsed = MutableSharedFlow<StreamState>(extraBufferCapacity = 64)
+        val coordinator = WBalCoordinator(
+            flowOf(streaming(DataType.Type.POWER, cp.toDouble())), elapsed, ride,
+            flowOf(WBalSettings(cp, wMax)), snapshotStore = store,
+        )
+        val out = mutableListOf<WBalResult?>()
+        val job = launch { coordinator.run(this).collect { out += it } }
+        testScheduler.runCurrent()
+
+        elapsed.emit(streaming(DataType.Type.ELAPSED_TIME, 120.0))
+        testScheduler.runCurrent()
+        ride.emit(RideState.Recording)
+        testScheduler.runCurrent()
+        elapsed.emit(streaming(DataType.Type.ELAPSED_TIME, 121.0))
+        testScheduler.runCurrent()
+        assertTrue("stays near the restored 9 kJ, was ${out.last()!!.wBalJoules}", out.last()!!.wBalJoules < 9_100.0)
+
+        job.cancel()
+    }
+
     @Test
     fun `live CP update changes depletion behavior`() = runTest {
         // Power constant at 300 W. With CP=250 it depletes; raise CP to 350 mid-ride and it

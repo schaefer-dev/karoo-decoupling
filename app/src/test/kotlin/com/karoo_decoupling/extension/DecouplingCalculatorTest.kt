@@ -98,6 +98,20 @@ class DecouplingCalculatorTest {
     }
 
     @Test
+    fun `mid-ride start splits the halves over the covered span`() {
+        // Service restarted an hour in: samples only from 3600 s on. Halves split 3600..3840,
+        // so a result appears after 120 s instead of only once the ride has doubled in length.
+        val calc = DecouplingCalculator()
+        for (s in 3600..3719) calc.addSample(s, 200.0, 140.0)
+        assertNull("span 119 s is still warm-up", calc.result())
+        for (s in 3720..3840) calc.addSample(s, 200.0, if (s <= 3720) 140.0 else 160.0)
+        val r = calc.result()
+        assertNotNull(r)
+        assertEquals(200.0 / 140.0, r!!.efFirst, 1e-6)
+        assertEquals(200.0 / 160.0, r.efSecond, 1e-6)
+    }
+
+    @Test
     fun `zero power in first half is handled without divide-by-zero`() {
         val calc = DecouplingCalculator()
         for (s in 0..120) calc.addSample(s, power = 0.0, hr = 150.0)

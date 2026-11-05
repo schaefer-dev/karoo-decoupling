@@ -21,6 +21,11 @@ class WBalCalculator {
         wBal = wMax
     }
 
+    /** Resume from a previously saved balance (mid-ride service restart). */
+    fun restore(wBalJoules: Double) {
+        wBal = wBalJoules
+    }
+
     /**
      * Advance the model by [dtSec] seconds at [power] watts, given [cp] and [wMax].
      * Returns the new [WBalResult]. If the balance has not been initialised yet (or
