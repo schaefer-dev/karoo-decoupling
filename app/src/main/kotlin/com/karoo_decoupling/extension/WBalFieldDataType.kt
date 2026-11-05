@@ -15,13 +15,18 @@ import io.hammerhead.karooext.models.ViewConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
  * Shared wiring for the five single-value W'bal display fields. Each subclass only decides
  * how to turn a [WBalResult] into a line of text and which background color to use; the base
- * handles preview, collecting the shared [WBalEngine] output, and the throttled RemoteViews
- * IPC. Kept thin per the project's Calculator/Coordinator/DataType seam (see CLAUDE.md).
+ * handles preview, collecting the shared [WBalEngine] output, and the RemoteViews IPC — which
+ * only fires when the shown text or color actually changes (the engine ticks every second, but
+ * e.g. the % and status fields change far less often). Kept thin per the project's
+ * Calculator/Coordinator/DataType seam (see CLAUDE.md).
  */
 abstract class WBalFieldDataType(
     private val engine: WBalEngine,
@@ -56,7 +61,7 @@ abstract class WBalFieldDataType(
         emitter.onNext(UpdateGraphicConfig(showHeader = false, formatDataTypeId = null))
 
         if (config.preview) {
-            emitter.updateView(render(context, previewResult(), simulated = false, config))
+            emitter.updateView(render(context, display(previewResult(), simulated = false), config))
             return
         }
 
@@ -64,21 +69,19 @@ abstract class WBalFieldDataType(
         val simulated = engine.simulated
         val scope = CoroutineScope(Dispatchers.IO)
         scope.launch {
-            engine.results.collect { result ->
-                emitter.updateView(render(context, result, simulated, config))
-            }
+            engine.results
+                .toDisplay(simulated, ::formatValue, ::backgroundColor, warmupColor())
+                .collect { emitter.updateView(render(context, it, config)) }
         }
         emitter.setCancellable { scope.cancel() }
     }
 
-    private fun render(
-        context: Context,
-        result: WBalResult?,
-        simulated: Boolean,
-        config: ViewConfig,
-    ): RemoteViews {
+    private fun display(result: WBalResult?, simulated: Boolean): WBalDisplay =
+        wbalDisplay(result, simulated, ::formatValue, ::backgroundColor, warmupColor())
+
+    private fun render(context: Context, display: WBalDisplay, config: ViewConfig): RemoteViews {
         val rv = RemoteViews(context.packageName, R.layout.field_wbal)
-        val background = if (result == null) warmupColor() else backgroundColor(result)
+        val background = display.background
         // Use a rounded shape drawable tinted to the status color so the fill respects Karoo's
         // rounded field edge (a flat setBackgroundColor rect would bleed past the corners). When
         // the rider disables field boundaries there's no rounded edge, so use sharp corners.
@@ -103,13 +106,7 @@ abstract class WBalFieldDataType(
         rv.setTextColor(R.id.wbal_title, Color.WHITE)
         rv.setTextColor(R.id.wbal_value, Color.WHITE)
 
-        val text = if (result == null) {
-            if (simulated) "— *" else "—"
-        } else {
-            val suffix = if (simulated) " *" else ""
-            formatValue(result) + suffix
-        }
-        rv.setTextViewText(R.id.wbal_value, text)
+        rv.setTextViewText(R.id.wbal_value, display.text)
         return rv
     }
 
@@ -124,3 +121,25 @@ abstract class WBalFieldDataType(
         )
     }
 }
+
+/** What a W'bal field shows: the value text (incl. simulated marker) and its background color. */
+internal data class WBalDisplay(val text: String, val background: Int)
+
+internal fun wbalDisplay(
+    result: WBalResult?,
+    simulated: Boolean,
+    format: (WBalResult) -> String,
+    background: (WBalResult) -> Int,
+    warmup: Int,
+): WBalDisplay {
+    val suffix = if (simulated) " *" else ""
+    return if (result == null) WBalDisplay("—$suffix", warmup) else WBalDisplay(format(result) + suffix, background(result))
+}
+
+/** Maps engine results to what the field shows, dropping ticks that wouldn't change the view. */
+internal fun Flow<WBalResult?>.toDisplay(
+    simulated: Boolean,
+    format: (WBalResult) -> String,
+    background: (WBalResult) -> Int,
+    warmup: Int,
+): Flow<WBalDisplay> = map { wbalDisplay(it, simulated, format, background, warmup) }.distinctUntilChanged()

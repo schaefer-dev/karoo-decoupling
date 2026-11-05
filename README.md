@@ -208,9 +208,9 @@ You can also export `USERNAME` and `TOKEN` environment variables.
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
 
 ./gradlew :app:assembleRelease
-# -> app/build/outputs/apk/release/karoo_decoupling-1.0.3-release.apk
+# -> app/build/outputs/apk/release/karoo_decoupling-1.0.4-release.apk
 
-adb install -r app/build/outputs/apk/release/karoo_decoupling-1.0.3-release.apk
+adb install -r app/build/outputs/apk/release/karoo_decoupling-1.0.4-release.apk
 ```
 
 Release builds are signed with the local Android debug keystore, so they install directly.

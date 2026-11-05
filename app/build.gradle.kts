@@ -12,8 +12,8 @@ android {
         applicationId = "com.karoo_decoupling"
         minSdk = 23
         targetSdk = 34
-        versionCode = 103
-        versionName = "1.0.3"
+        versionCode = 104
+        versionName = "1.0.4"
     }
 
     buildFeatures {

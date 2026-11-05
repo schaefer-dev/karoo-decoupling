@@ -32,6 +32,7 @@ class DecouplingExtension : KarooExtension(EXTENSION_ID, "0.1.0") {
     }
 
     override fun onDestroy() {
+        wBalEngine.stop()
         karooSystem.disconnect()
         super.onDestroy()
     }

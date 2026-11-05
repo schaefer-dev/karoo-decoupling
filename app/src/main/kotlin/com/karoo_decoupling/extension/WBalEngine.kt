@@ -10,6 +10,7 @@ import io.hammerhead.karooext.models.StreamState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,5 +69,10 @@ class WBalEngine(
         scope.launch {
             coordinator.run(this).collect { _results.value = it }
         }
+    }
+
+    /** Stops the computation and releases the stream subscriptions (service shutdown). */
+    fun stop() {
+        scope.cancel()
     }
 }
