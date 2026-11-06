@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.png" alt="Karoo Decoupling: live aerobic decoupling and W' balance data fields on a Hammerhead Karoo" width="100%">
+  <img src="assets/hero.png" alt="Karoo Decoupling: Pa:Hr decoupling, its trend, and W' balance data fields on two Hammerhead Karoo 3 screens at different points in a ride" width="100%">
 </p>
 
 <p align="center">

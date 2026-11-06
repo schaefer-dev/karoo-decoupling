@@ -4,7 +4,9 @@
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
     --window-size=1280,640 --force-device-scale-factor=2 --virtual-time-budget=4000 \
     --screenshot=assets/hero.png "file://$PWD/assets/hero.html"
-  Field colors mirror DecouplingColors.kt / WBalColors.kt.
+  The device screens are real Karoo 3 screenshots (screen-early.png / screen-late.png),
+  taken from the debug build's simulator. Layout mirrors ../karoo-intervals-screen/assets/hero.html.
+  Colors mirror DecouplingColors.kt / WBalColors.kt.
 -->
 <html lang="en">
 <head>
@@ -12,18 +14,16 @@
 <title>Karoo Decoupling hero</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;800&family=Barlow:wght@400;500&family=Roboto:wght@400;700&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;800&family=Barlow:wght@400;500&display=block" rel="stylesheet">
 <style>
   :root {
     --fog: #E4EAEE;
     --fog-deep: #CBD5DC;
     --ink: #14202A;
     --ink-soft: #4A5965;
+    --bezel: #1C2126;
     --power: #E39B12;
     --hr: #B71C1C;
-    --green: #1B5E20;
-    --amber: #F9A825;
-    --bezel: #1C2126;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1280px; height: 640px; overflow: hidden; }
@@ -36,134 +36,59 @@
     position: relative;
   }
 
-  /* ---- The ride chart: the memorable element ---- */
-  .ride { position: absolute; inset: 0; }
+  /* ---- Power vs heart rate across the bottom: the memorable element ---- */
+  .ride { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; }
 
   /* ---- Copy ---- */
-  .copy { position: absolute; left: 72px; top: 76px; width: 640px; }
+  .copy { position: absolute; left: 72px; top: 70px; width: 640px; }
   .wordmark {
     font-family: "Barlow Condensed", sans-serif;
-    font-weight: 800;
-    font-size: 104px;
-    line-height: 0.86;
-    letter-spacing: -1px;
+    font-weight: 800; font-size: 104px; line-height: 0.86; letter-spacing: -1px;
   }
   .wordmark span { display: block; }
   .tagline {
     margin-top: 26px;
-    font-family: "Barlow Condensed", sans-serif;
-    font-weight: 500;
-    font-size: 34px;
-    line-height: 1.15;
-    color: var(--ink);
-    max-width: 560px;
+    font-family: "Barlow Condensed", sans-serif; font-weight: 500;
+    font-size: 34px; line-height: 1.15; max-width: 500px;
   }
-  .sub {
-    margin-top: 14px;
-    font-size: 19px;
-    line-height: 1.45;
-    color: var(--ink-soft);
-    max-width: 520px;
-  }
+  .sub { margin-top: 14px; font-size: 19px; line-height: 1.45; color: var(--ink-soft); max-width: 520px; }
 
   .legend {
-    position: absolute; left: 72px; top: 548px;
-    display: flex; gap: 28px;
-    font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 20px;
-    color: var(--ink-soft);
+    position: absolute; left: 72px; top: 450px;
+    display: flex; gap: 26px; align-items: center;
+    font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 20px; color: var(--ink-soft);
   }
   .legend i { display: inline-block; width: 26px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+  .legend i.gap { height: 14px; border-radius: 3px; background: rgba(183, 28, 28, 0.22); }
 
-  /* ---- Karoo 3 mockup ---- */
+  /* ---- Karoo 3 mockups ---- */
   .device {
-    position: absolute; right: 92px; top: 28px;
-    width: 346px; height: 584px;
+    position: absolute; width: 300px; height: 506px;
     background: linear-gradient(160deg, #2A3037 0%, var(--bezel) 45%, #121619 100%);
-    border-radius: 44px;
+    border-radius: 42px;
     box-shadow:
       0 40px 70px -30px rgba(20, 32, 42, 0.55),
       0 0 0 2px #0E1114,
       inset 0 1px 0 rgba(255,255,255,0.12);
-    padding: 26px 22px 64px;
+    padding: 24px 20px 54px;
   }
-  .device::after { /* lower button strip */
-    content: ""; position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-    width: 96px; height: 14px; border-radius: 7px; background: #2C333A;
+  .device::after {
+    content: ""; position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    width: 92px; height: 13px; border-radius: 7px; background: #2C333A;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
   }
-  .btn { position: absolute; width: 6px; height: 54px; border-radius: 3px; background: #2C333A; }
-  .btn.l1 { left: -5px; top: 120px; } .btn.r1 { right: -5px; top: 120px; }
-  .btn.l2 { left: -5px; top: 420px; } .btn.r2 { right: -5px; top: 420px; }
+  .btn { position: absolute; width: 6px; height: 52px; border-radius: 3px; background: #2C333A; }
+  .btn.l1 { left: -5px; top: 100px; } .btn.r1 { right: -5px; top: 100px; }
+  .btn.l2 { left: -5px; top: 360px; } .btn.r2 { right: -5px; top: 360px; }
+  .device img { width: 100%; height: 100%; border-radius: 8px; display: block; object-fit: cover; object-position: top; }
 
-  .screen {
-    width: 100%; height: 100%;
-    background: #000; border-radius: 8px; overflow: hidden;
-    display: grid;
-    grid-template-rows: 22px 1.25fr 1fr 0.8fr 1fr;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    font-family: "Roboto", sans-serif; color: #fff;
-  }
-  .status {
-    grid-column: 1 / -1;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0 10px; font-size: 12px; color: #D6DADD; background: #000;
-  }
-  .status .bat { display: inline-block; width: 20px; height: 10px; border: 1.5px solid #D6DADD; border-radius: 2px; position: relative; vertical-align: -1px; margin-left: 4px; }
-  .status .bat::after { content: ""; position: absolute; inset: 1.5px 5px 1.5px 1.5px; background: #D6DADD; }
-  .tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .tile .t {
-    position: absolute; top: 5px; left: 0; right: 0; text-align: center;
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2px;
-  }
-  .tile .v { font-size: 46px; font-weight: 400; margin-top: 12px; letter-spacing: -0.5px; }
-  .wide { grid-column: 1 / -1; }
-  .green { background: var(--green); }
-  .amber { background: var(--amber); }
-  .black { background: #000; }
-
-  .trend .delta {
-    position: absolute; top: 8px; left: 12px;
-    font-size: 26px; font-weight: 700; text-shadow: 0 0 6px rgba(0,0,0,0.7);
-  }
-  .trend .t { left: auto; right: 10px; text-align: right; text-shadow: 0 0 3px #000; }
-  .trend svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .early { right: 340px; top: 74px; transform: rotate(-5deg); }
+  .late  { right: 60px;  top: 50px; transform: rotate(4deg); }
 </style>
 </head>
 <body>
 
-<!-- Power (flat) vs heart rate (drifting up) across a ride, split at the midpoint. -->
-<svg class="ride" viewBox="0 0 1280 640" preserveAspectRatio="none" aria-hidden="true">
-  <defs>
-    <linearGradient id="hrfade" x1="0" x2="1">
-      <stop offset="0" stop-color="#B71C1C" stop-opacity="0.15"/>
-      <stop offset="0.35" stop-color="#B71C1C" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#B71C1C" stop-opacity="1"/>
-    </linearGradient>
-    <linearGradient id="pwfade" x1="0" x2="1">
-      <stop offset="0" stop-color="#E39B12" stop-opacity="0.15"/>
-      <stop offset="0.35" stop-color="#E39B12" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#E39B12" stop-opacity="1"/>
-    </linearGradient>
-    <linearGradient id="gap" x1="0" x2="1">
-      <stop offset="0" stop-color="#B71C1C" stop-opacity="0"/>
-      <stop offset="1" stop-color="#B71C1C" stop-opacity="0.16"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Midpoint split: first half vs second half -->
-  <line x1="470" y1="446" x2="470" y2="520" stroke="#14202A" stroke-opacity="0.28" stroke-width="1.5" stroke-dasharray="4 6"/>
-
-  <!-- Drift gap between the curves (second half) -->
-  <path d="M470 470 C 560 466, 680 446, 800 422 S 1040 386, 1280 372 L 1280 486 L 800 488 C 680 489, 560 489, 470 489 Z" fill="url(#gap)"/>
-
-  <!-- Power: steady -->
-  <path d="M0 492 C 60 484, 110 496, 170 489 S 280 494, 340 488 S 440 493, 500 489 S 610 492, 680 488 S 800 491, 880 488 S 1000 491, 1080 487 S 1200 490, 1280 486"
-        fill="none" stroke="url(#pwfade)" stroke-width="5" stroke-linecap="round"/>
-  <!-- Heart rate: tracks power, then drifts up -->
-  <path d="M0 474 C 70 470, 130 478, 200 472 S 330 474, 400 471 S 440 472, 470 470 C 560 466, 680 446, 800 422 S 1040 386, 1280 372"
-        fill="none" stroke="url(#hrfade)" stroke-width="5" stroke-linecap="round"/>
-</svg>
+<svg class="ride" viewBox="0 0 1280 170" preserveAspectRatio="none" aria-hidden="true" id="ride"></svg>
 
 <div class="copy">
   <div class="wordmark"><span>Karoo</span><span>Decoupling</span></div>
@@ -174,32 +99,50 @@
 <div class="legend">
   <span><i style="background: var(--power)"></i>Power</span>
   <span><i style="background: var(--hr)"></i>Heart rate</span>
+  <span><i class="gap"></i>Drift</span>
 </div>
 
-<div class="device">
+<div class="device early">
   <span class="btn l1"></span><span class="btn r1"></span><span class="btn l2"></span><span class="btn r2"></span>
-  <div class="screen">
-    <div class="status"><span>10:42</span><span>87%<span class="bat"></span></span></div>
-
-    <div class="tile wide green trend">
-      <svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
-        <line x1="12" y1="98" x2="288" y2="98" stroke="#fff" stroke-opacity="0.25" stroke-width="1"/>
-        <path d="M12 96 L 40 92 L 62 95 L 84 88 L 108 84 L 130 86 L 152 78 L 176 74 L 198 70 L 220 66 L 240 60 L 262 56 L 288 50"
-              fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span class="delta">▲ +1.3%</span>
-      <span class="t">pw:hr trend</span>
-    </div>
-
-    <div class="tile green"><span class="t">pw:hr</span><span class="v">+4.2%</span></div>
-    <div class="tile amber"><span class="t">W'bal %</span><span class="v">64%</span></div>
-
-    <div class="tile wide amber"><span class="t">W'bal status</span><span class="v" style="font-size: 36px">WORKING</span></div>
-
-    <div class="tile black"><span class="t">W'bal time</span><span class="v">3:42</span></div>
-    <div class="tile black"><span class="t">W'bal rate</span><span class="v" style="font-size: 40px">-85 W</span></div>
-  </div>
+  <img src="screen-early.png" alt="">
+</div>
+<div class="device late">
+  <span class="btn l1"></span><span class="btn r1"></span><span class="btn l2"></span><span class="btn r2"></span>
+  <img src="screen-late.png" alt="">
 </div>
 
+<script>
+  // A steady ride: power holds, heart rate tracks it through the first half, then drifts up.
+  // Deterministic "noise" from summed sines so every render is identical.
+  const W = 1280, H = 170, N = 200;
+  const noise = (x, a, b, c) => Math.sin(x * a) * 0.6 + Math.sin(x * b + 1.3) * 0.3 + Math.sin(x * c + 2.1) * 0.1;
+  const onset = 0.3; // HR starts to creep away from power about a third into the ride
+  const pw = [], hr = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, x = t * W;
+    pw.push([x, 128 + noise(i, 0.21, 0.47, 1.3) * 4.5]);
+    const drift = t < onset ? 0 : Math.pow((t - onset) / (1 - onset), 1.15) * 84;
+    hr.push([x, 112 - drift + noise(i, 0.13, 0.37, 1.1) * 3]);
+  }
+  const line = (pts) => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('ride');
+  const add = (tag, attrs) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+
+  // Shaded drift gap from the onset: HR forward, power back.
+  const from = Math.round(N * onset);
+  const hrB = hr.slice(from), pwB = pw.slice(from).reverse();
+  const defs = add('defs', {});
+  defs.innerHTML = `
+    <linearGradient id="gapfill" x1="0" x2="1">
+      <stop offset="0" stop-color="#B71C1C" stop-opacity="0.04"/>
+      <stop offset="0.45" stop-color="#B71C1C" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#B71C1C" stop-opacity="0.24"/>
+    </linearGradient>`;
+  add('path', { d: line(hrB) + ' ' + pwB.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z', fill: 'url(#gapfill)' });
+
+  add('path', { d: line(pw), fill: 'none', stroke: '#E39B12', 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.9 });
+  add('path', { d: line(hr), fill: 'none', stroke: '#B71C1C', 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.9 });
+</script>
 </body>
 </html>
